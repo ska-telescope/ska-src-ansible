@@ -25,7 +25,7 @@ Currently the infrastructure machine must be created manually. The recipe looks 
 4. Add a `clouds.yaml` at `/etc/openstack/clouds.yaml` to enable communication with the openstack instance via the cli. Also add a duplicate `clouds.capi.yaml` containing the `cacert` key required by the clusterapi roles
 5. Install kubectl:
 ```bash
-$ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/	stable.txt)/bin/linux/amd64/kubectl"
+$ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 $ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 ```
    	
