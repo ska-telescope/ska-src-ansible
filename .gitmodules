@@ -1,0 +1,3 @@
+[submodule "ska-ser-ansible-collections"]
+	path = ska-ser-ansible-collections
+	url = https://gitlab.com/ska-telescope/sdi/ska-ser-ansible-collections.git
