@@ -1,0 +1,42 @@
+- name: Creating new openstack machine 
+  debug:
+    msg: "Creating new openstack machine..." 
+
+- name: Create openstack compute instance
+  openstack.cloud.server:
+    state: present
+    cloud: openstack
+    name: "{{ machine_name }}"
+    image: "{{ machine_image }}"
+    key_name: "{{ machine_key_name }}"
+    auto_ip: no
+    timeout: 200
+    flavor: "{{ machine_flavor }}"
+    network: "{{ machine_network }}"
+    security_groups:
+      - default
+
+- name: Get info about the VM created
+  openstack.cloud.server_info:
+    cloud: openstack
+    server: "{{ machine_name }}"
+    filters:
+      vm_state: active
+  register: result
+
+- name: Print the internal IP
+  debug:
+    msg: "{{ result.servers[0].addresses[machine_network][0].addr }}"
+
+- name: Create working directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ working_dir_abspath }}"
+    state: directory
+    mode: '0755'
+
+- name: Create an inventory file for the management machine
+  copy:
+    dest: "{{ working_dir_abspath }}/inventory.ini"
+    content: |
+      [{{ capi_management_target_hosts }}] 
+      {{ machine_name }} ansible_host={{ result.servers[0].addresses[machine_network][0].addr }} ansible_user=ubuntu ansible_connection=ssh

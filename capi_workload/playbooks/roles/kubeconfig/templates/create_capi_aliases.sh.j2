@@ -1,0 +1,14 @@
+#!/bin/bash
+
+export HOSTNAME="{{ ansible_hostname }}"
+export CLUSTER_NAME="{{ capi_cluster }}"
+
+alias k-$HOSTNAME="/usr/local/bin/kubectl"
+alias k-$CLUSTER_NAME="/usr/local/bin/kubectl --kubeconfig /etc/kubeconfigs/$CLUSTER_NAME"
+alias k9s-$HOSTNAME="/usr/local/bin/k9s"
+alias k9s-$CLUSTER_NAME="/usr/local/bin/k9s --kubeconfig /etc/kubeconfigs/$CLUSTER_NAME"
+alias helm-$HOSTNAME="/usr/local/bin/helm"
+alias helm-$CLUSTER_NAME="/usr/local/bin/helm --kubeconfig /etc/kubeconfigs/$CLUSTER_NAME"
+alias helm="printf 'do not use helm, use helm- instead\n'"
+alias kubectl="printf 'do not use kubectl, use k- instead\n'"
+alias k9s="printf 'do not use k9s, use k9s- instead\n'"

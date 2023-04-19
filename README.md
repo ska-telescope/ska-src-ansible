@@ -1,92 +1,100 @@
-# SKA SRC Ansible
+# srcnet\_ansible\_playbooks
 
+This repository contains ansible playbooks to build (prospective) infrastructure required by the SRCNet. These playbooks enable clusterapi based Kubernetes deployments using the clusterapi collection from `ska-ser-ansible-collections.ska_collections` (https://gitlab.com/ska-telescope/sdi/ska-ser-ansible-collections), requiring roles from the `ska_collections.minikube` collection for building a management cluster with Minikube and the `ska_collections.k8s` collection for post workload cluster deployment processing and customisation.
 
+Fundamentally, this is a collection of ansible helpers that facilitate the deployment of Kubernetes clusters using the [openstack cluster api provider](https://github.com/kubernetes-sigs/cluster-api-provider-openstack).
 
-## Getting started
+## Overview
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+The clusterapi operator is an operator that works on the same principles as any other Kubernetes custom resource definition. The operator is deployed in a "management cluster" along with the desired cloud infrastructure providers that provide the driver interface for communicating with the specific infrastructure context. See the [clusterapi reference]( https://cluster-api.sigs.k8s.io/user/concepts.html) for details.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+To create a "workload cluster" the user defines a collection of manifests that describe the machine and cluster layout. The corresponding manifest is then generated (using `clusterctl generate cluster`) and applied to the management cluster, which in turn orchestrates the creation of the workload cluster by communicating with the infrastructure provider (openstack in this case) and driving the [kubeadm configuration manager](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/).
 
-## Add your files
+The clusterapi manifest specification enables a set of "pre" and "post" kubeadm init hooks that are applied to both the control plane and worker nodes in the target workload cluster. These hooks enable customisations of the deployment to be injected into the deployment workflow. This cannot be achieved by the `clusterctl generate cluster` flow directly, so [kustomize](https://kustomize.io/) templates are used to inject the necessary changes. These templates add in the execution of specific ansible-playbook flows for both the control plane and worker nodes so that the hosts are customised and the necessary baseline services are installed into the workload cluster e.g. containerd mirror configs, docker, helm tools, pod networking etc.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Deployment workflow
 
+This workflow assumes the existence of an "infrastructure management" machine, that is, a machine that can run the playbooks to create both the management and workload clusters.
+
+### Infrastructure machine
+
+At this point, the infrastructure machine must be created manually. The recipe looks something like:
+
+1. Create new VM, e.g. src-infrastructure-manager, l3.micro, Ubuntu 20.04, SRCNet network, 192.168.1.102
+2. Install [ansible](https://docs.ansible.com/ansible/latest/installation\_guide/installation\_distros.html#installing-ansible-on-ubuntu)
+3. Install the openstack ansible collection (`ansible-galaxy collection install git+https://opendev.org/openstack/ansible-collections-openstack`). At time of writing, the bleeding edge in the apt repository contains a bug.
+3. Install openstack sdk w/ cli
+4. Add a `clouds.yaml` at /etc/openstack/clouds.yaml. Add `clouds.capi.yaml` which contains the `cacert` key
+5. Add kubectl
+
+   ```bash
+   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+   sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+   ```
+
+### Management cluster
+
+From the infrastructure machine, the deployment workflow proceeds via Makefiles targets. A full end-to-end example is shown below.
+
+First we need to create the machine that will be used to host the management cluster:
+
+```bash
+  $ make create-capi-management-machine-openstack
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/ska-telescope/src/ska-src-ansible.git
-git branch -M main
-git push -uf origin main
+
+The intermediate working directory (e.g. where inventory files will be stored) can either be specified in the Makefile or the role defaults.
+
+Next, create the management cluster:
+
+```bash
+  $ make capi-management
 ```
 
-## Integrate with your tools
+The management cluster name can either be specified in the Makefile or as a ninja2 `default` in the playbook. 
 
-- [ ] [Set up project integrations](https://gitlab.com/ska-telescope/src/ska-src-ansible/-/settings/integrations)
+### Workload cluster
 
-## Collaborate with your team
+Finally, create a workload cluster:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```bash
+  $ make capi-workload
+```
 
-## Test and Deploy
+The workload cluster name can either be specified in the Makefile or as a ninja2 `default` in the playbook. The control plane and worker node count can either be specified in the Makefile or the role defaults.
 
-Use the built-in continuous integration in GitLab.
+## Notes/gotchas
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+- Currently need to add symlinks to get around the fact that relative paths are used in the `ska-ser-ansible-collections` collections, e.g. 
 
-***
+  ```bash
+  $ sudo ln -s /opt/srcnet_ansible_playbooks/ska-ser-ansible-collections/resources resources
+  ```
 
-# Editing this README
+- Need two versions of `clouds.yaml`. When creating the management machine, the one at `/etc/openstack/clouds.yaml` is used. When driving clusterapi, the one specified in `capi_workload_deploy` playbook (`capi_capo_openstack_cloud_config`) is used. This is because the key `cacert` is required by the latter but prohibited by the former.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- Capi images are not built beforehand; they are instead made on the fly against vanilla ubuntu images with kubeadm pre/post init hooks using kustomize - see [here](https://gitlab.com/ska-telescope/sdi/ska-ser-ansible-collections/-/tree/main/resources/clusterapi/kustomize/capobase). These kustomize snippets are merged together before being put through `clusterctl` to generate the workload cluster manfiests. See `/tmp/capo-config.log` on the control/worker plane for logs. Likewise, pod networking is done after join with post init hooks. Trying to use capi specific images has previously led to errors where kubernetes tries to use docker for networking rather than containerd.
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+- The last step getting the workload kubeconfig currently fails. However, this can be gotten explicitly from the management cluster by e.g.:
 
-## Name
-Choose a self-explaining name for your project.
+  ```bash 
+  $ kubectl get secret/test-workload-kubeconfig -o json | jq -r .data.value | base64 --decode > /tmp/kubeconfig
+  $ cd /tmp/
+  $ kubectl get nodes --kubeconfig /tmp/kubeconfig
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+  NAME                                STATUS   ROLES           AGE   VERSION
+  test-workload-control-plane-ckzw6   Ready    control-plane   32m   v1.25.7
+  test-workload-md-0-xjq6n            Ready    <none>          27m   v1.25.7
+  test-workload-md-0-xzsz5            Ready    <none>          27m   v1.25.7
+  ```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+## Outstanding issues
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- Relative paths are a problem, especially those using the magic variable playbook\_dir as we're calling our own playbooks. We've gotten around most of these by creating symlinks where it expects to find stuff, but obviously that's massively hacky. Doing this isn't always possible either e.g. ones that traverse directly to /  in our folder structure.
+- Unattended upgrades cause some workload nodes to fail [here](https://gitlab.com/ska-telescope/sdi/ska-ser-ansible-collections/-/blob/main/ansible\_collections/ska\_collections/k8s/roles/k8s/tasks/main.yml#L22), sometimes. The number of retries needs to be bumped considerably.
+- We had a podman buildah dependency fail - it couldn't find 1.28.0-1. Doing an apt list gave us an earliest available version of 1.29.0-1, so we changed this variable in the role.
+- At one point we were inadvertently using an old version of the services ansible repo to which changes had been committed. This caused a playbook naming mismatch when it pulls the repo in the kustomize tools snippet & it subsequently fell over. Resolved by pulling the latest version of the repo but possibly worth adding either a commit hash or tag to the corresponding clone command so things can be pinned to a specific vers?
+- Need to manually accept fingerprint for ssh connection to management machine
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+## Reference
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+[Confluence page](https://confluence.skatelescope.org/x/ZYkEDQ)

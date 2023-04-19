@@ -1,0 +1,13 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Install minikube dependencies and useful tools, then deploy an instance of minikube on a node.
+  hosts: "{{ capi_management_target_hosts }}" 
+  roles:
+    - role: ska_collections.minikube.setup
+      tags:
+        - build
+      become: true
+      become_method: sudo
+    - role: ska_collections.minikube.minikube
+      vars:
+        - minikube_addons: []

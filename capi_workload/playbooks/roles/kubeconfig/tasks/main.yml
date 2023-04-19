@@ -1,0 +1,44 @@
+- name: Check workload cluster is running
+  ska_collections.clusterapi.wait_for_cluster:
+    name: "{{ capi_cluster }}"
+    phase: "{{ capi_machine_phase }}"
+    kubectl_namespace: "{{ capi_kube_namespace }}"
+    initpause: 10
+    wait: 30
+    retries: 56
+    kubectl_kubeconfig: "/home/ubuntu/.kube/config"
+
+- name: Save cluster kubeconfig credentials # noqa no-changed-when risky-shell-pipe
+  ansible.builtin.shell: |
+    kubectl get secret/{{ capi_cluster }}-kubeconfig -o json | \
+    jq -r .data.value | \
+    base64 --decode
+  register: workload_kubeconfig
+  environment:
+    KUBECONFIG: "/home/ubuntu/.kube/config"
+
+- name: Fail if workload KUBECONFIG secret is not found
+  ansible.builtin.fail:
+    msg: "Workload KUBECONFIG Secret is NOT found: secret/{{ capi_cluster }}-kubeconfig: {{ workload_kubeconfig.stderr }}"
+  when: "not workload_kubeconfig.stderr.find('Error from server') == -1"
+  any_errors_fatal: true
+
+- name: Create /etc/kubeconfigs if it does not exist
+  ansible.builtin.file:
+    path: "/etc/kubeconfigs"
+    state: directory
+    mode: '0755'
+
+- name: Output workload kubeconfig copy  # noqa: template-instead-of-copy
+  ansible.builtin.copy:
+    content: "{{ workload_kubeconfig.stdout }}"
+    dest: "/etc/kubeconfigs/{{ capi_cluster }}"
+    mode: 0644
+  become: true
+
+- name: Make /etc/create_aliases.sh file for switching contexts
+  ansible.builtin.template:
+    src: "create_capi_aliases.sh.j2"
+    dest: "/etc/create_capi_aliases.sh"
+    mode: 0644
+  become: true

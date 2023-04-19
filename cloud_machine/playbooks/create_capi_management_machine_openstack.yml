@@ -1,0 +1,11 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Create a new Openstack machine
+  hosts: "{{ target_hosts }}"
+  connection: local
+  vars:
+    target_hosts: localhost
+    machine_name: "{{ capi_management_machine_name | default('management-node', true) }}"
+  roles:
+    - create_machine_openstack
+

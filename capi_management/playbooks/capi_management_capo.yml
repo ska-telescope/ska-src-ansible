@@ -1,0 +1,7 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Install clusterctl and the CAPO infrastructure provider on the mgmt cluster.
+  hosts: "{{ capi_management_target_hosts }}" 
+  roles:
+    - ska_collections.clusterapi.clusterapi
+    - ska_collections.clusterapi.configcapo

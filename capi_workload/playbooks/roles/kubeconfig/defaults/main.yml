@@ -1,0 +1,5 @@
+---
+capi_cluster: capi-workload
+capi_kube_namespace: default
+capi_machine_phase: Provisioned
+

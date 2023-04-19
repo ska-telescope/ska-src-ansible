@@ -1,0 +1,7 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Delete CAPI generated workload cluster
+  hosts: "{{ capi_management_target_hosts }}"
+  connection: local
+  roles:
+    - capi_workload_delete 

@@ -1,0 +1,18 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Deploy workload cluster services
+  hosts: "{{ capi_management_target_hosts }}"
+  vars:
+    capi_cluster_name: "{{ CAPI_CLUSTER_NAME | default ('capi-workload', true) }}"
+    k8s_kubeconfig: "{{ capi_management_kubeconfig }}"
+  pre_tasks:
+    - name: Check k8s_kubeconfig
+      ansible.builtin.debug:
+        var: k8s_kubeconfig
+  roles:
+    - role: ska_collections.k8s.ingress
+      vars:
+        - capi_cluster: "{{ capi_cluster_name |truncate(14, True) }}"
+  environment:
+    KUBECONFIG: "{{ lookup('ansible.builtin.env', 'KUBECONFIG', default=k8s_kubeconfig) | mandatory }}"
+

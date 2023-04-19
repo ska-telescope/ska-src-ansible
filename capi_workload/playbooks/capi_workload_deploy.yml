@@ -1,0 +1,26 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Deploy a workload cluster
+  hosts: "{{ capi_management_target_hosts }}"
+  vars:
+    capi_cluster_name: "{{ CAPI_CLUSTER_NAME | default ('capi-workload', true) }}"
+  roles:
+    - role: ska_collections.clusterapi.createworkload
+      vars:
+        - cluster_apply: true      
+        - capi_capo_openstack_cloud: openstack
+        - capi_capo_openstack_cloud_config: /etc/openstack/clouds.capi.yaml
+        - capi_cluster: "{{ capi_cluster_name }}"
+        - capi_capo_run_kubelet_install: true
+        - capi_oci_mirror_ip: 
+        - capi_capo_openstack_image_name: ubuntu-jammy-22.04
+        - capi_capo_openstack_dns_servers: 130.246.209.132
+        - capi_capo_openstack_ssh_key_name: eng-src-infrastructure-manager
+        - capi_capo_openstack_external_network_id: 5283f642-8bd8-48b6-8608-fa3006ff4539
+        - capi_capo_os_network_name: SRCNet-network
+        - capi_capo_os_subnet_name: SRCNet-network-subnet
+        - capi_capo_controlplane_machine_flavour: l3.micro
+        - capi_capo_node_machine_flavour: l3.tiny 
+    - role: kubeconfig
+      vars:
+        - capi_cluster: "{{ capi_cluster_name }}"

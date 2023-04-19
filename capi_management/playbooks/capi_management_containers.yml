@@ -1,0 +1,18 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Install and configure podman, docker and containerd on the mgmt cluster.
+  hosts: "{{ capi_management_target_hosts }}"
+  roles:
+    - role: ska_collections.docker_base.containerd  
+      become: true
+      become_method: sudo
+      vars:
+        - nexus: localhost
+    - role: ska_collections.docker_base.docker
+      vars:
+        - docker_allow_version_change: true
+      become: true
+      become_method: sudo
+    - role: ska_collections.docker_base.podman
+      become: true
+      become_method: sudo
