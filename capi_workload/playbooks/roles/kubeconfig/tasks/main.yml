@@ -23,16 +23,16 @@
   when: "not workload_kubeconfig.stderr.find('Error from server') == -1"
   any_errors_fatal: true
 
-- name: Create /etc/kubeconfigs if it does not exist
+- name: Create capi_management_workload_kubeconfig_dir if it does not exist
   ansible.builtin.file:
-    path: "/etc/kubeconfigs"
+    path: "{{ capi_management_workload_kubeconfig_dir }}"
     state: directory
     mode: '0755'
 
 - name: Output workload kubeconfig copy  # noqa: template-instead-of-copy
   ansible.builtin.copy:
     content: "{{ workload_kubeconfig.stdout }}"
-    dest: "/etc/kubeconfigs/{{ capi_cluster }}"
+    dest: "{{ capi_management_workload_kubeconfig_dir }}/{{ capi_cluster }}"
     mode: 0644
   become: true
 

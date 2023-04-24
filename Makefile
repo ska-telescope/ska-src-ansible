@@ -1,21 +1,25 @@
 .PHONY: all create-capi-management-machine-openstack capi-management capi-workload pre
 
-CAPI_MANAGEMENT_MACHINE_NAME 	?= "srcnet-capi-management-1"		# leave blank for default defined in playbook
-CAPI_CLUSTER_NAME		?= "srcnet-workload-1"			# leave blank for default defined in playbook
-CAPI_CONTROLPLANE_COUNT		?= 3 					# leave blank for default defined in role defaults
-CAPI_WORKER_COUNT		?= 6					# leave blank for default defined in role defaults
-WORKING_DIR_ABSPATH             ?= /opt/srcnet_ansible_playbooks/tmp
-CAPI_MANAGEMENT_TARGET_HOSTS	?= "management_cluster"
-CAPI_MANAGEMENT_KUBECONFIG	?= "/etc/kubeconfigs/$(CAPI_CLUSTER_NAME)"
+CAPI_MANAGEMENT_MACHINE_NAME 			?= srcnet-capi-management-1#	leave blank for default defined in playbook
+CAPI_CLUSTER_NAME				?= srcnet-workload-1#		leave blank for default defined in playbook
+CAPI_CLUSTER_LOADBALANCER_SUFFIX       	 	?= workload1# 			leave blank for default defined in role defaults
+CAPI_CONTROLPLANE_COUNT				?= 3#				leave blank for default defined in role defaults
+CAPI_WORKER_COUNT				?= 6#				leave blank for default defined in role defaults
+WORKING_DIR_ABSPATH             		?= /opt/ska-src-ansible/tmp#	where inventories etc. will be kept
+CAPI_MANAGEMENT_TARGET_HOSTS			?= management_cluster#		the target group name for the management cluster in the inventories file
+CAPI_MANAGEMENT_WORKLOAD_KUBECONFIG_DIR		?= /etc/kubeconfigs#		where workload kubeconfigs will be kept on management cluster, leave blank for default defined in role defaults
+                                                                                                 
 
 ANSIBLE_EXTRA_VARS = --extra-vars working_dir_abspath=$(WORKING_DIR_ABSPATH) \
-		     --extra-vars capi_management_target_hosts=$(CAPI_MANAGEMENT_TARGET_HOSTS) \
-		     --extra-vars capi_management_kubeconfig=$(CAPI_MANAGEMENT_KUBECONFIG)
+		     --extra-vars capi_management_target_hosts=$(CAPI_MANAGEMENT_TARGET_HOSTS)
 ifneq ($(CAPI_MANAGEMENT_MACHINE_NAME),) 
 	ANSIBLE_EXTRA_VARS += --extra-vars capi_management_machine_name=$(CAPI_MANAGEMENT_MACHINE_NAME) 
 endif
 ifneq ($(CAPI_CLUSTER_NAME),)
 	ANSIBLE_EXTRA_VARS += --extra-vars capi_cluster_name=$(CAPI_CLUSTER_NAME) 
+endif
+ifneq ($(CAPI_CLUSTER_LOADBALANCER_SUFFIX),)
+	ANSIBLE_EXTRA_VARS += --extra-vars capi_cluster_loadbalancer_suffix=$(CAPI_CLUSTER_LOADBALANCER_SUFFIX)
 endif
 ifneq ($(CAPI_CONTROLPLANE_COUNT),)
 	ANSIBLE_EXTRA_VARS += --extra-vars capi_controlplane_count=$(CAPI_CONTROLPLANE_COUNT) 
@@ -23,6 +27,10 @@ endif
 ifneq ($(CAPI_WORKER_COUNT),)
 	ANSIBLE_EXTRA_VARS += --extra-vars capi_worker_count=$(CAPI_WORKER_COUNT) 
 endif	
+ifneq ($(CAPI_MANAGEMENT_WORKLOAD_KUBECONFIG_DIR),)
+	ANSIBLE_EXTRA_VARS += --extra-vars capi_management_workload_kubeconfig_dir=$(CAPI_MANAGEMENT_WORKLOAD_KUBECONFIG_DIR)
+endif
+
 
 all: create-capi-management-machine-openstack capi-management capi-workload
 

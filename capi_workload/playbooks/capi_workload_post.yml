@@ -4,7 +4,7 @@
   hosts: "{{ capi_management_target_hosts }}"
   vars:
     capi_cluster_name: "{{ CAPI_CLUSTER_NAME | default ('capi-workload', true) }}"
-    k8s_kubeconfig: "{{ capi_management_kubeconfig }}"
+    k8s_kubeconfig: "{{ capi_management_workload_kubeconfig_dir }}/{{ capi_cluster_name }}"
   pre_tasks:
     - name: Check k8s_kubeconfig
       ansible.builtin.debug:
@@ -12,7 +12,8 @@
   roles:
     - role: ska_collections.k8s.ingress
       vars:
-        - capi_cluster: "{{ capi_cluster_name |truncate(14, True) }}"
+        - capi_cluster: capi_cluster_name
+        - k8s_ingress_lb_suffix: "{{ capi_cluster_loadbalancer_suffix }}"
   environment:
     KUBECONFIG: "{{ lookup('ansible.builtin.env', 'KUBECONFIG', default=k8s_kubeconfig) | mandatory }}"
 
