@@ -1,0 +1,6 @@
+---
+capi_cluster: capi-workload
+capi_kube_namespace: default
+capi_machine_phase: Provisioned
+capi_management_workload_kubeconfig_dir: /etc/kubeconfigs/
+argocd_server_insecure: "true"

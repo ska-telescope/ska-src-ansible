@@ -1,0 +1,43 @@
+- name: Check workload cluster is running
+  ska_collections.clusterapi.wait_for_cluster:
+    name: "{{ capi_cluster }}"
+    phase: "{{ capi_machine_phase }}"
+    kubectl_namespace: "{{ capi_kube_namespace }}"
+    initpause: 10
+    wait: 30
+    retries: 56
+    kubectl_kubeconfig: "/home/ubuntu/.kube/config"
+
+- name: Check if ArgoCD namespace exists
+  kubernetes.core.k8s_info:
+    name: argocd
+    api_version: v1
+    kind: Namespace
+    kubeconfig: "{{ capi_management_workload_kubeconfig_dir }}/{{ capi_cluster }}"
+  register: result
+
+- name: Copy over templated kustomized yml to apply ArgoCD
+  ansible.builtin.template:
+    src: "kustomization.yml"
+    dest: "/tmp/argocd/kustomization.yml"
+    mode: 0644
+- name: Copy over yaml to apply ArgoCD ingress
+  ansible.builtin.copy:
+    src: "{{ role_path }}/templates/argocd-server-ingress.yml"
+    dest: "/tmp/argocd/argocd-server-ingress.yml"
+    mode: 0644
+
+- name: Create ArgoCD namespace if it doesn't exist
+  kubernetes.core.k8s:
+    name: argocd
+    api_version: v1
+    kind: Namespace
+    state: present
+    kubeconfig: "{{ capi_management_workload_kubeconfig_dir }}/{{ capi_cluster }}"
+  when: result.resources == []
+
+- name: Apply ArgoCD 2.4.7 manifest with modifications
+  ansible.builtin.shell:
+    cmd: kubectl apply --kubeconfig {{ capi_management_workload_kubeconfig_dir }}/{{ capi_cluster }} -n argocd -k /tmp/argocd/
+  when: result.resources == []
+  become: true

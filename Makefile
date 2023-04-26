@@ -8,7 +8,7 @@ CAPI_WORKER_COUNT				?= 6#				leave blank for default defined in role defaults
 WORKING_DIR_ABSPATH             		?= /opt/ska-src-ansible/tmp#	where inventories etc. will be kept
 CAPI_MANAGEMENT_TARGET_HOSTS			?= management_cluster#		the target group name for the management cluster in the inventories file
 CAPI_MANAGEMENT_WORKLOAD_KUBECONFIG_DIR		?= /etc/kubeconfigs#		where workload kubeconfigs will be kept on management cluster, leave blank for default defined in role defaults
-                                                                                                 
+CAPI_WORKLOAD_INGRESS				?= false#			whether ingress should be installed/reinstalled on the workload cluster. Set to false if ingress already exists and you don't want to recreate ingress-nginx controller, LB, etc
 
 ANSIBLE_EXTRA_VARS = --extra-vars working_dir_abspath=$(WORKING_DIR_ABSPATH) \
 		     --extra-vars capi_management_target_hosts=$(CAPI_MANAGEMENT_TARGET_HOSTS)
@@ -29,6 +29,9 @@ ifneq ($(CAPI_WORKER_COUNT),)
 endif	
 ifneq ($(CAPI_MANAGEMENT_WORKLOAD_KUBECONFIG_DIR),)
 	ANSIBLE_EXTRA_VARS += --extra-vars capi_management_workload_kubeconfig_dir=$(CAPI_MANAGEMENT_WORKLOAD_KUBECONFIG_DIR)
+endif
+ifneq ($(CAPI_WORKLOAD_INGRESS),)
+	ANSIBLE_EXTRA_VARS += --extra-vars capi_workload_ingress=$(CAPI_WORKLOAD_INGRESS)
 endif
 
 
@@ -73,6 +76,7 @@ capi-workload-deploy: pre
 capi-workload-post: pre
 	ANSIBLE_HOST_KEY_CHECKING=False \
         ANSIBLE_COLLECTIONS_PATHS=$(PWD)/ska-ser-ansible-collections/ \
+	ANSIBLE_LIBRARY=$(PWD)/ska-ser-ansible-collections/ansible_collections/ska_collections/clusterapi/plugins/modules \
         ansible-playbook $(ANSIBLE_EXTRA_VARS) ./capi_workload/playbooks/capi_workload_post.yml -i $(WORKING_DIR_ABSPATH)/inventory.ini -vv
 
 capi-workload-delete: 

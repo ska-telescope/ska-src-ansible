@@ -9,11 +9,14 @@
     - name: Check k8s_kubeconfig
       ansible.builtin.debug:
         var: k8s_kubeconfig
+  environment:
+    KUBECONFIG: "{{ lookup('ansible.builtin.env', 'KUBECONFIG', default=k8s_kubeconfig) | mandatory }}"
   roles:
     - role: ska_collections.k8s.ingress
       vars:
         - capi_cluster: capi_cluster_name
         - k8s_ingress_lb_suffix: "{{ capi_cluster_loadbalancer_suffix }}"
-  environment:
-    KUBECONFIG: "{{ lookup('ansible.builtin.env', 'KUBECONFIG', default=k8s_kubeconfig) | mandatory }}"
-
+      when: capi_workload_ingress == "true"
+    - role: argocd
+      vars:
+        - capi_cluster: "{{ capi_cluster_name }}"
