@@ -2,7 +2,7 @@
 
 [[_TOC_]]
 
-This repository contains ansible playbooks to build SKAOSRC IaC (infrastructure as code) in a self-documenting and repeatable way.
+This repository contains ansible playbooks and makefile targets to build SKAOSRC IaC (infrastructure as code) in a self-documenting and repeatable way.
 
 These playbooks assume the existence of an "infrastructure management" machine, that is, a machine to run the playbooks from.
 
@@ -20,13 +20,32 @@ Currently the infrastructure machine must be created manually. The recipe looks 
 $ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 $ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 ```
-   	
-6. Clone this repository and initialise the ska-ser-ansible-collections repository:
+6. Clone this repository and initialise the dependent repositories (note that the `src-ansible-collections` repository, required by `proxy.mf` targets is currently private):
 ```bash
 $ git submodule init && git submodule update
 ```
 
-## Cluster API
+## Proxy machine (proxy.mf)
+
+### Overview
+
+These playbooks enable the creation of a HAProxy reverse proxy machine. By default, the makefile targets assume that the user has access to a private configuration repository, `src-services-deployment`, that contains part of the HAProxy configuration (userlists, frontends, backends), some of which is sensitive. 
+
+Currently the procedure is only partly automated. The following needs to be done after machine creation:
+
+- Add security groups for exposed ports, 
+- Associate a floating IP to the instance, and
+- Obtain SSL certs (assumes the CA is LetsEncrypt)
+
+### Playbook listing
+
+- `create_machine_openstack`
+  - `create_proxy_machine_openstack`: create an instance for the proxy machine on Openstack
+  - `delete_proxy_machine_openstack`: delete an instance of the proxy machine on Openstack
+- `proxy_machine`
+  - `install_haproxy`: install HAProxy on a centos machine
+
+## Cluster API management and workload machines (capi.mf)
 
 ### Overview
 
@@ -38,12 +57,11 @@ To create a "workload cluster" the user defines a collection of manifests that d
 
 The Cluster API manifest specification enables a set of "pre" and "post" kubeadm init hooks that are applied to both the control plane and worker nodes in the target workload cluster. These hooks enable customisations of the deployment to be injected into the deployment workflow. This cannot be achieved by the `clusterctl generate cluster` flow directly, so [kustomize](https://kustomize.io/) templates are used to inject the necessary changes. These templates add in the execution of specific ansible-playbook flows for both the control plane and worker nodes so that the hosts are customised and the necessary baseline services are installed into the workload cluster e.g. containerd mirror configs, docker, helm tools, pod networking etc.
 
-
 ### Playbook listing
 
 - `create_machine_openstack`
   - `create_capi_management_machine_openstack`: create an instance for the capi management machine on Openstack
-  - `delete_capi_management_machine_openstack`: delete an instance for the capi management machine on Openstack
+  - `delete_capi_management_machine_openstack`: delete an instance of the capi management machine on Openstack
 - `capi_workload`
   - `capi_workload_deploy`: create a capi workload cluster using the `ska_collections`.`clusterapi`.`createworkload` playbook
   - `capi_workload_post`:  deploy integral services on a capi workload cluster, e.g. ingress
