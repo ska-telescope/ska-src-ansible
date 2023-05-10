@@ -31,11 +31,7 @@ $ git submodule init && git submodule update
 
 These playbooks enable the creation of a HAProxy reverse proxy machine. By default, the makefile targets assume that the user has access to a private configuration repository, `src-services-deployment`, that contains part of the HAProxy configuration (userlists, frontends, backends), some of which is sensitive. 
 
-Currently the procedure is only partly automated. The following needs to be done after machine creation:
-
-- Add security groups for exposed ports, 
-- Associate a floating IP to the instance, and
-- Obtain SSL certs (assumes the CA is LetsEncrypt)
+The workflow currently only supports running one instance of HAProxy (not very HA, I know).
 
 ### Playbook listing
 
@@ -44,6 +40,28 @@ Currently the procedure is only partly automated. The following needs to be done
   - `delete_proxy_machine_openstack`: delete an instance of the proxy machine on Openstack
 - `proxy_machine`
   - `install_haproxy`: install HAProxy on a centos machine
+
+### Creating an HAProxy machine
+
+From the infrastructure machine, the deployment workflow proceeds via Makefiles targets. A full end-to-end example is shown below.
+
+First we need to create the machine that will be used to run HAProxy:
+
+```bash
+  $ make -f proxy.mk  create-proxy-machine-openstack
+```
+
+Then we can install HAProxy:
+
+```bash
+  $ make -f proxy.mk install-HAProxy
+```
+
+As the procedure is only partly automated the following needs to be done after machine creation:
+
+- Add security groups for exposed ports, 
+- Associate a floating IP to the instance, and
+- Obtain SSL certs (assumes the CA is LetsEncrypt) using the scripts `/etc/request_cert_certbot.sh` and `/etc/update_certs.sh` (make sure there are no port 80 redirects running!)
 
 ## Cluster API management and workload machines (capi.mf)
 
@@ -71,7 +89,7 @@ The Cluster API manifest specification enables a set of "pre" and "post" kubeadm
   - `capi_mmanagement_minikube`: install minikube on a capi management cluster
   - `capi_management_capo`: install clusterctl and the CAPO infrastructure provider on a capi management cluster
 
-### Management cluster
+### Creating the management cluster
 
 From the infrastructure machine, the deployment workflow proceeds via Makefiles targets. A full end-to-end example is shown below.
 
@@ -91,7 +109,7 @@ Next, create the management cluster:
 
 The management cluster name can either be specified in the Makefile or as a ninja2 `default` in the playbook. 
 
-### Workload cluster
+### Creating a workload cluster
 
 Finally, create a workload cluster:
 
