@@ -38,5 +38,5 @@
   copy:
     dest: "{{ working_dir_abspath }}/inventory.ini"
     content: |
-      [{{ capi_management_target_hosts }}] 
-      {{ machine_name }} ansible_host={{ result.servers[0].addresses[machine_network][0].addr }} ansible_user=ubuntu ansible_connection=ssh
+      [{{ target_hosts_group }}] 
+      {{ machine_name }} ansible_host={{ result.servers[0].addresses[machine_network][0].addr }} ansible_user={{ machine_ssh_user }} ansible_connection=ssh

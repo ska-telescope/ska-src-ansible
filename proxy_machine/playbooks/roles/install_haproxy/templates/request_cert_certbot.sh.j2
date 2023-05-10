@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# make sure that haproxy isn't redirecting traffic on 80 to 443 before running.ceph.srcdev.skao.int
+sudo certbot certonly --standalone -d {{ ssl.domain }} {% for subdomain in ssl.subdomains %} -d {{ subdomain }} {% endfor %} --non-interactive --agree-tos --email {{ ssl.email }} --expand --http-01-port=8888

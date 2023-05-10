@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Renew the certificate
+certbot renew --force-renewal
+
+# Concatenate new cert files, with less output (avoiding the use tee and its output to stdout)
+bash -c "sudo cat /etc/letsencrypt/live/{{ ssl.domain }}/fullchain.pem /etc/letsencrypt/live/{{ ssl.domain }}/privkey.pem | sudo tee /etc/ssl/{{ ssl.domain }}/{{ ssl.domain }}.pem"
+
+# Reload  HAProxy
+service haproxy reload

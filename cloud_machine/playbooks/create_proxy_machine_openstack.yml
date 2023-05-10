@@ -1,0 +1,13 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Create a new Openstack proxy machine
+  connection: local
+  hosts: localhost
+  vars:
+    target_hosts_group: "{{ proxy_target_hosts_group }}"
+    machine_name: "{{ proxy_machine_name | default('proxy-machine', true) }}"
+    machine_image: "{{ proxy_machine_image | default('centos-stream-8-nogui', true) }}"
+    machine_ssh_user: "{{ proxy_machine_ssh_user | default('centos', true) }}"
+  roles:
+    - create_machine_openstack
+

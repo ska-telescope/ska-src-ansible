@@ -1,0 +1,9 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Deploy HAProxy on a machine
+  hosts: "{{ target_hosts }}"
+  become: yes
+  vars:
+    target_hosts: "{{ proxy_target_hosts_group }}"
+  roles:
+    - install_haproxy

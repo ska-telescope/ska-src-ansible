@@ -21,6 +21,7 @@
     src: "kustomization.yml"
     dest: "/tmp/argocd/kustomization.yml"
     mode: 0644
+
 - name: Copy over yaml to apply ArgoCD ingress
   ansible.builtin.copy:
     src: "{{ role_path }}/templates/argocd-server-ingress.yml"

@@ -1,6 +1,8 @@
 #!/usr/bin/env ansible-playbook
 ---
-- name: Delete an Openstack machine
+- name: Delete an Openstack capi mgmt machine
   hosts: localhost
+  vars:
+    machine_name: "{{ capi_management_machine_name | default('management-node', true) }}"
   roles:
   - delete_machine_openstack

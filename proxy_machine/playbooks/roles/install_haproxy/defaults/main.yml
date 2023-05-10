@@ -1,0 +1,11 @@
+---
+proxy_cfg_dir_abspath:
+ssl:
+  email: rob.barnsley@skao.int
+  domain: srcdev.skao.int
+  subdomains:
+    - sited.srcdev.skao.int
+    - rucio.srcdev.skao.int
+    - monit.srcdev.skao.int
+    - argocd.srcdev.skao.int
+    - ceph.srcdev.skao.int 

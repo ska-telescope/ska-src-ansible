@@ -6,12 +6,12 @@ CAPI_CLUSTER_LOADBALANCER_SUFFIX       	 	?= workload1# 			leave blank for defau
 CAPI_CONTROLPLANE_COUNT				?= 3#				leave blank for default defined in role defaults
 CAPI_WORKER_COUNT				?= 6#				leave blank for default defined in role defaults
 WORKING_DIR_ABSPATH             		?= /opt/ska-src-ansible/tmp#	where inventories etc. will be kept
-CAPI_MANAGEMENT_TARGET_HOSTS			?= management_cluster#		the target group name for the management cluster in the inventories file
+CAPI_MANAGEMENT_TARGET_HOSTS_GROUP		?= management_cluster#		the target group name for the management cluster in the inventories file
 CAPI_MANAGEMENT_WORKLOAD_KUBECONFIG_DIR		?= /etc/kubeconfigs#		where workload kubeconfigs will be kept on management cluster, leave blank for default defined in role defaults
 CAPI_WORKLOAD_INGRESS				?= false#			whether ingress should be installed/reinstalled on the workload cluster. Set to false if ingress already exists and you don't want to recreate ingress-nginx controller, LB, etc
 
 ANSIBLE_EXTRA_VARS = --extra-vars working_dir_abspath=$(WORKING_DIR_ABSPATH) \
-		     --extra-vars capi_management_target_hosts=$(CAPI_MANAGEMENT_TARGET_HOSTS)
+		     --extra-vars capi_management_target_hosts_group=$(CAPI_MANAGEMENT_TARGET_HOSTS_GROUP)
 ifneq ($(CAPI_MANAGEMENT_MACHINE_NAME),) 
 	ANSIBLE_EXTRA_VARS += --extra-vars capi_management_machine_name=$(CAPI_MANAGEMENT_MACHINE_NAME) 
 endif

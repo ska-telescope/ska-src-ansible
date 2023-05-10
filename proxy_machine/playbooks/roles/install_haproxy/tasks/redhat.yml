@@ -1,0 +1,56 @@
+- name: Install the latest version of haproxy, certbot
+  ansible.builtin.yum:
+    name: 
+      - haproxy
+      - certbot
+    state: latest
+
+- name: Set default haproxy service to enabled
+  copy:
+    dest: "/etc/default/haproxy"
+    content: |
+      ENABLED=1
+
+- name: Read content of userlist files
+  set_fact:
+    userlist_files_contents: "{{ userlist_files_contents | default({}) | combine({item | basename: lookup('file', item)}) }}" 
+  with_fileglob: "{{ proxy_cfg_dir_abspath }}/userlists/*"
+  delegate_to: localhost
+
+- name: Read content of frontend files
+  set_fact:
+    frontend_files_contents: "{{ frontend_files_contents | default({}) | combine({item | basename: lookup('file', item)}) }}"
+  with_fileglob: "{{ proxy_cfg_dir_abspath }}/frontends/*"
+  delegate_to: localhost
+
+- name: Read content of backend files
+  set_fact:
+    backend_files_contents: "{{ backend_files_contents | default({}) | combine({item | basename: lookup('file', item)}) }}"
+  with_fileglob: "{{ proxy_cfg_dir_abspath }}/backends/*"
+  delegate_to: localhost
+
+- name: Make /etc/haproxy.cfg file from template
+  ansible.builtin.template:
+    src: "haproxy.cfg.j2"
+    dest: "/etc/haproxy/haproxy.cfg"
+    mode: 0644
+  become: true
+
+- name: Create auxillary script (request_cert_certbot)
+  ansible.builtin.template:
+    src: "request_cert_certbot.sh.j2"
+    dest: "/etc/request_cert_certbot.sh"
+    mode: 0644
+  become: true
+
+- name: Create auxillary script (update_certs)
+  ansible.builtin.template:
+    src: "update_certs.sh.j2"
+    dest: "/etc/update_certs.sh"
+    mode: 0644
+  become: true
+
+- name: Ensure HAProxy is running
+  service: 
+    name: haproxy 
+    state: started

@@ -1,3 +1,7 @@
 [submodule "ska-ser-ansible-collections"]
 	path = ska-ser-ansible-collections
 	url = https://gitlab.com/ska-telescope/sdi/ska-ser-ansible-collections.git
+
+[submodule "src-services-deployment"]
+	path = src-services-deployment
+	url = https://gitlab.com/ska-telescope/src/src-services-deployment.git

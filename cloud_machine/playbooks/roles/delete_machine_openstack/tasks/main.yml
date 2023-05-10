@@ -3,4 +3,4 @@
   openstack.cloud.server:
     state: absent
     cloud: "{{ openstack_cloud}}"
-    name: "{{ capi_management_machine_name }}"
+    name: "{{ machine_name }}"

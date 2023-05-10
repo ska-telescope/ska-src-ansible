@@ -4,4 +4,5 @@ machine_image: ubuntu-jammy-22.04
 machine_key_name: eng-src-infrastructure-manager
 machine_flavor: l3.micro
 machine_network: SRCNet-network
+machine_ssh_user: ubuntu
 working_dir_abspath: /tmp
