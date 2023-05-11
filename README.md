@@ -38,6 +38,7 @@ The workflow currently only supports running one instance of HAProxy (not very H
 - `create_machine_openstack`
   - `create_proxy_machine_openstack`: create an instance for the proxy machine on Openstack
   - `delete_proxy_machine_openstack`: delete an instance of the proxy machine on Openstack
+  - `create_proxy_security_group_openstack`: create a security group for the proxy with ingress rules on Openstack
 - `proxy_machine`
   - `install_haproxy`: install HAProxy on a centos machine
 
@@ -57,11 +58,12 @@ Then we can install HAProxy:
   $ make -f proxy.mk install-HAProxy
 ```
 
-As the procedure is only partly automated the following needs to be done after machine creation:
+The procedure may require the following if SSL certificates are required:
 
-- Add security groups for exposed ports, 
-- Associate a floating IP to the instance, and
-- Obtain SSL certs (assumes the CA is LetsEncrypt) using the scripts `/etc/request_cert_certbot.sh` and `/etc/update_certs.sh` (make sure there are no port 80 redirects running!)
+- request certs using `/etc/request_cert_certbot.sh` 
+- create a full chain certificate using `/etc/update_certs.sh`
+
+For this to work, you need to make sure that the haproxy configuration has a LetsEncrypt frontend/backend and that you are not redirecting any other frontends on port 80.
 
 ## Cluster API management and workload machines (capi.mf)
 
