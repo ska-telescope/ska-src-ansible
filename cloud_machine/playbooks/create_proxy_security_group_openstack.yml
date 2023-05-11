@@ -1,0 +1,10 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Create a new Openstack security group for the proxy machine
+  connection: local
+  hosts: localhost
+  vars:
+    security_group_name: "{{ proxy_security_group_name | default('proxy-security-group', true) }}" 
+  roles:
+    - create_security_group_openstack
+

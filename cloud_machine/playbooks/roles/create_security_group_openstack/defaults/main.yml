@@ -1,0 +1,6 @@
+---
+openstack_cloud: openstack
+security_group_name:
+security_group_ports:
+  - 80
+  - 443

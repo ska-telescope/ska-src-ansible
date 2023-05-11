@@ -33,21 +33,21 @@
   ansible.builtin.template:
     src: "haproxy.cfg.j2"
     dest: "/etc/haproxy/haproxy.cfg"
-    mode: 0644
+    mode: 0755
   become: true
 
 - name: Create auxillary script (request_cert_certbot)
   ansible.builtin.template:
     src: "request_cert_certbot.sh.j2"
     dest: "/etc/request_cert_certbot.sh"
-    mode: 0644
+    mode: 0755
   become: true
 
 - name: Create auxillary script (update_certs)
   ansible.builtin.template:
     src: "update_certs.sh.j2"
     dest: "/etc/update_certs.sh"
-    mode: 0644
+    mode: 0755
   become: true
 
 - name: Ensure HAProxy is running

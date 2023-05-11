@@ -8,6 +8,10 @@
     machine_name: "{{ proxy_machine_name | default('proxy-machine', true) }}"
     machine_image: "{{ proxy_machine_image | default('centos-stream-8-nogui', true) }}"
     machine_ssh_user: "{{ proxy_machine_ssh_user | default('centos', true) }}"
+    machine_security_groups:
+      - default
+      - "{{ proxy_security_group_name }}"
+    machine_floating_ip: "{{ proxy_machine_floating_ip }}"
   roles:
     - create_machine_openstack
 

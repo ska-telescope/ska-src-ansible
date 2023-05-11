@@ -2,10 +2,24 @@
   debug:
     msg: "Creating new openstack machine..." 
 
-- name: Create openstack compute instance
+- name: Create openstack compute instance (FIP)
   openstack.cloud.server:
     state: present
-    cloud: openstack
+    cloud: "{{ openstack_cloud }}"
+    name: "{{ machine_name }}"
+    image: "{{ machine_image }}"
+    key_name: "{{ machine_key_name }}"
+    floating_ips: "{{ machine_floating_ip }}"
+    timeout: 200
+    flavor: "{{ machine_flavor }}"
+    network: "{{ machine_network }}"
+    security_groups: "{{ machine_security_groups }}" 
+  when: machine_floating_ip | length > 0
+
+- name: Create openstack compute instance (NO FIP)
+  openstack.cloud.server:
+    state: present
+    cloud: "{{ openstack_cloud }}"
     name: "{{ machine_name }}"
     image: "{{ machine_image }}"
     key_name: "{{ machine_key_name }}"
@@ -13,12 +27,12 @@
     timeout: 200
     flavor: "{{ machine_flavor }}"
     network: "{{ machine_network }}"
-    security_groups:
-      - default
+    security_groups: "{{ machine_security_groups }}"
+  when: machine_floating_ip | length == 0 
 
 - name: Get info about the VM created
   openstack.cloud.server_info:
-    cloud: openstack
+    cloud: "{{ openstack_cloud }}"
     server: "{{ machine_name }}"
     filters:
       vm_state: active

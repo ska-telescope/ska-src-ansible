@@ -1,4 +1,5 @@
 ---
+openstack_cloud: openstack
 proxy_cfg_dir_abspath:
 ssl:
   email: rob.barnsley@skao.int
@@ -9,3 +10,7 @@ ssl:
     - monit.srcdev.skao.int
     - argocd.srcdev.skao.int
     - ceph.srcdev.skao.int 
+proxy_security_group_name: srcnet-proxy
+proxy_security_group_ports:
+  - 80
+  - 443

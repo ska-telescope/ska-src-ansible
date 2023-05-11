@@ -1,8 +1,13 @@
 ---
+openstack_cloud: openstack
 machine_name:
 machine_image: ubuntu-jammy-22.04
 machine_key_name: eng-src-infrastructure-manager
 machine_flavor: l3.micro
 machine_network: SRCNet-network
 machine_ssh_user: ubuntu
+machine_security_groups:
+  - default
+machine_auto_ip: no
+machine_floating_ip: 
 working_dir_abspath: /tmp
