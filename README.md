@@ -46,24 +46,22 @@ The workflow currently only supports running one instance of HAProxy (not very H
 
 From the infrastructure machine, the deployment workflow proceeds via Makefiles targets. A full end-to-end example is shown below.
 
-First we need to create the machine that will be used to run HAProxy:
+First we create the security group used by the proxy machine:
+```bash
+  $ make -f proxy.mk  create-proxy-security-group-openstack
+```
+
+Then we create the machine that will be used to run HAProxy:
 
 ```bash
   $ make -f proxy.mk  create-proxy-machine-openstack
 ```
 
-Then we can install HAProxy:
+Finally we can install HAProxy:
 
 ```bash
   $ make -f proxy.mk install-HAProxy
 ```
-
-The procedure may require the following if SSL certificates are required:
-
-- request certs using `/etc/request_cert_certbot.sh` 
-- create a full chain certificate using `/etc/update_certs.sh`
-
-For this to work, you need to make sure that the haproxy configuration has a LetsEncrypt frontend/backend and that you are not redirecting any other frontends on port 80.
 
 ## Cluster API management and workload machines (capi.mf)
 
