@@ -2,6 +2,7 @@
 openstack_cloud: openstack
 proxy_cfg_dir_abspath:
 ssl:
+  ca: letsencrypt
   email: rob.barnsley@skao.int
   domain: srcdev.skao.int
   subdomains:

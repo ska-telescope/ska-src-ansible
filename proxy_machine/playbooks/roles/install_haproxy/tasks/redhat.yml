@@ -11,9 +11,49 @@
     content: |
       ENABLED=1
 
+- name: Make /etc/haproxy.cfg file from letsencrypt template
+  ansible.builtin.template:
+    src: "haproxy.letsencrypt.cfg.j2"
+    dest: "/etc/haproxy/haproxy.cfg"
+    mode: 0755
+  become: true
+  when: ssl.ca == 'letsencrypt'
+
+- name: Create auxillary letsencrypt script (request_cert_certbot)
+  ansible.builtin.template:
+    src: "request_cert_certbot.sh.j2"
+    dest: "/etc/request_cert_certbot.sh"
+    mode: 0755
+  become: true
+  when: ssl.ca == 'letsencrypt'
+
+- name: Create auxillary letsencrypt script (update_certs)
+  ansible.builtin.template:
+    src: "update_certs.sh.j2"
+    dest: "/etc/update_certs.sh"
+    mode: 0755
+  become: true
+  when: ssl.ca == 'letsencrypt'
+
+- name: Ensure HAProxy is running
+  service:
+    name: haproxy
+    state: started
+  when: ssl.ca == 'letsencrypt'
+
+- name: Run request_cert_certbot script
+  ansible.builtin.shell: /etc/request_cert_certbot.sh
+  become: true
+  when: ssl.ca == 'letsencrypt'
+
+- name: Run update_certs script
+  ansible.builtin.shell: /etc/update_certs.sh
+  become: true
+  when: ssl.ca == 'letsencrypt'
+
 - name: Read content of userlist files
   set_fact:
-    userlist_files_contents: "{{ userlist_files_contents | default({}) | combine({item | basename: lookup('file', item)}) }}" 
+    userlist_files_contents: "{{ userlist_files_contents | default({}) | combine({item | basename: lookup('file', item)}) }}"
   with_fileglob: "{{ proxy_cfg_dir_abspath }}/userlists/*"
   delegate_to: localhost
 
@@ -27,30 +67,15 @@
   set_fact:
     backend_files_contents: "{{ backend_files_contents | default({}) | combine({item | basename: lookup('file', item)}) }}"
   with_fileglob: "{{ proxy_cfg_dir_abspath }}/backends/*"
-  delegate_to: localhost
 
-- name: Make /etc/haproxy.cfg file from template
+- name: Make /etc/haproxy.cfg file from generic template
   ansible.builtin.template:
     src: "haproxy.cfg.j2"
     dest: "/etc/haproxy/haproxy.cfg"
     mode: 0755
   become: true
 
-- name: Create auxillary script (request_cert_certbot)
-  ansible.builtin.template:
-    src: "request_cert_certbot.sh.j2"
-    dest: "/etc/request_cert_certbot.sh"
-    mode: 0755
-  become: true
-
-- name: Create auxillary script (update_certs)
-  ansible.builtin.template:
-    src: "update_certs.sh.j2"
-    dest: "/etc/update_certs.sh"
-    mode: 0755
-  become: true
-
 - name: Ensure HAProxy is running
   service: 
     name: haproxy 
-    state: started
+    state: restarted
